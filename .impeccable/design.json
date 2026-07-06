@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-04T22:25:00Z",
+  "title": "Design System: RecebaBem",
+  "extensions": {
+    "colorMeta": {
+      "brand-blue": { "role": "primary", "displayName": "Corporate Blue", "canonical": "#1565C0" },
+      "brand-green": { "role": "secondary", "displayName": "Gamified Green", "canonical": "#00897B" },
+      "brand-sand": { "role": "neutral-bg", "displayName": "Coastal Sand", "canonical": "#FDF6E3" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Cabeçalhos maiores, como nomes de níveis e dashboards." },
+      "body": { "displayName": "Body", "purpose": "Texto padrão para interface e lições de inglês." }
+    },
+    "shadows": [
+      { "name": "shadow-sm", "value": "0 1px 3px rgba(0,0,0,.08)", "purpose": "Sombra de repouso padrão para cards." },
+      { "name": "shadow-md", "value": "0 4px 12px rgba(0,0,0,.12)", "purpose": "Sombra de hover." },
+      { "name": "shadow-lg", "value": "0 8px 24px rgba(0,0,0,.16)", "purpose": "Menus, dropdowns e popovers." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botão Primário",
+      "kind": "button",
+      "refersTo": "btn-primary",
+      "description": "Botão de ação principal, estilo corporativo.",
+      "html": "<button class=\"ds-btn-primary\">ENTRAR NO PAINEL</button>",
+      "css": ".ds-btn-primary { background: #1565C0; color: #fff; padding: 12px 24px; border-radius: 16px; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s; } .ds-btn-primary:hover { background: #0D47A1; } .ds-btn-primary:active { transform: scale(0.95); }"
+    },
+    {
+      "name": "Botão Secundário (Trilhas)",
+      "kind": "button",
+      "refersTo": "btn-secondary",
+      "description": "Usado para finalizar e avançar exercícios.",
+      "html": "<button class=\"ds-btn-secondary\">CONTINUAR</button>",
+      "css": ".ds-btn-secondary { background: #00897B; color: #fff; padding: 12px 24px; border-radius: 16px; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s; } .ds-btn-secondary:hover { background: #00695C; } .ds-btn-secondary:active { transform: scale(0.95); }"
+    },
+    {
+      "name": "Card Acolhedor",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Container base para os blocos da plataforma.",
+      "html": "<div class=\"ds-card\"><h3 style=\"margin: 0; font-family: sans-serif; color: #111827; margin-bottom: 8px;\">Título do Card</h3><p style=\"margin: 0; font-family: sans-serif; color: #4B5563; font-size: 14px;\">Conteúdo acolhedor e limpo em texto.</p></div>",
+      "css": ".ds-card { background: #fff; border-radius: 20px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); border: 1px solid #f3f4f6; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "O Guia Confiável à Beira-Mar",
+    "overview": "O design do RecebaBem equilibra o rigor e a clareza de um software tradicional com a receptividade calorosa e envolvente do turismo baiano. A interface transpira confiança sem ser rígida.",
+    "keyCharacteristics": [
+      "Fundo quente e convidativo (brand-sand)",
+      "Acentos vivos usados com precisão",
+      "Formas acolhedoras com cantos arredondados generosos"
+    ],
+    "rules": [
+      { "name": "The Warm Contrast Rule", "body": "Não use o Coastal Sand como background de elementos interativos.", "section": "colors" },
+      { "name": "The Grounded Card Rule", "body": "Elementos de conteúdo usam a sombra mais sutil disponível.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do manter as animações de entrada rápidas.",
+      "Do usar branco puro para cards sobre o fundo Coastal Sand.",
+      "Do utilizar a cor verde para sucessos e recompensas."
+    ],
+    "donts": [
+      "Don't criar o visual de um sistema de contabilidade dos anos 90.",
+      "Don't aplicar cores neon ou sombras gigantes.",
+      "Don't usar o padrão SaaS corporativo genérico (fundo cinza frio)."
+    ]
+  }
+}
