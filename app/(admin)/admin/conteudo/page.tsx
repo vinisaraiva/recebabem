@@ -9,11 +9,29 @@ import ToggleActiveButton from '@/components/admin/ToggleActiveButton'
 
 export const metadata = { title: 'Conteúdo' }
 
+type TrackWithModules = {
+  id: string
+  name: string
+  slug: string
+  icon: string | null
+  color: string | null
+  active: boolean
+  level: string | null
+  modules: Array<{
+    id: string
+    name: string
+    slug: string
+    active: boolean
+    order_index: number
+    missions: Array<{ count: number }>
+  }>
+}
+
 export default async function ConteudoPage() {
   const supabase = await createClient()
 
   // Carrega trilhas com seus módulos e contagem de missões
-  const { data: tracks } = await supabase
+  const { data: tracksRaw } = await supabase
     .from('tracks')
     .select(`
       id, name, slug, icon, color, active, level,
@@ -23,6 +41,8 @@ export default async function ConteudoPage() {
       )
     `)
     .order('order_index')
+
+  const tracks = (tracksRaw ?? []) as unknown as TrackWithModules[]
 
   return (
     <div className="p-6 max-w-4xl">
@@ -40,11 +60,8 @@ export default async function ConteudoPage() {
       </div>
 
       <div className="space-y-4">
-        {(tracks ?? []).map((track) => {
-          const modules      = (track.modules as unknown as Array<{
-            id: string; name: string; slug: string; active: boolean; order_index: number;
-            missions: Array<{ count: number }>
-          }>) ?? []
+        {tracks.map((track) => {
+          const modules = track.modules ?? []
           const totalMissions = modules.reduce((sum, m) => sum + (m.missions?.[0]?.count ?? 0), 0)
 
           return (
