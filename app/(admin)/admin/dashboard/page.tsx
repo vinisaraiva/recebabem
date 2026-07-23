@@ -30,8 +30,9 @@ export default async function AdminDashboardPage() {
     .from('certificate_queue')
     .select('*', { count: 'exact' })
 
-  const mrr = (metrics as Record<string, unknown>)?.mrr as number ?? 0
-  const arr = (metrics as Record<string, unknown>)?.arr as number ?? 0
+  const metricsData = metrics as unknown as Record<string, unknown>
+  const mrr = metricsData?.mrr as number ?? 0
+  const arr = metricsData?.arr as number ?? 0
 
   return (
     <div className="p-6 max-w-5xl">
@@ -72,7 +73,7 @@ export default async function AdminDashboardPage() {
             <span className="text-xs font-medium uppercase">Funcionários</span>
           </div>
           <p className="text-3xl font-bold">
-            {(metrics as Record<string, unknown>)?.total_active_employees as number ?? 0}
+            {metricsData?.total_active_employees as number ?? 0}
           </p>
           <p className="text-xs text-gray-400">total na plataforma</p>
         </div>
