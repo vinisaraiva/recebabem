@@ -11,6 +11,7 @@ import { Zap, X, Trophy, RotateCcw } from 'lucide-react'
 import Link from 'next/link'
 
 import { completeMission } from '@/lib/actions/missions'
+import { claimDailyBonus } from '@/lib/actions/daily-challenge'
 
 import QuizMission           from '@/components/missions/QuizMission'
 import FillBlankMission      from '@/components/missions/FillBlankMission'
@@ -46,12 +47,14 @@ interface Props {
   fila:             string
   /** Total de missões na sessão (para barra de progresso). 0 = fora de sessão. */
   total:            number
+  /** Missão aberta via Desafio do Dia — credita bônus 2× ao acertar. */
+  isDesafio?:       boolean
 }
 
 type GameState = 'playing' | 'correct' | 'wrong' | 'already_done' | 'module_complete'
 
 export default function MissionPlayer({
-  mission, existingProgress, backHref, fila, total,
+  mission, existingProgress, backHref, fila, total, isDesafio = false,
 }: Props) {
   const router = useRouter()
 
@@ -63,9 +66,10 @@ export default function MissionPlayer({
   const initialState: GameState =
     !inSession && existingProgress?.status === 'completed' ? 'already_done' : 'playing'
 
-  const [state,   setState]   = useState<GameState>(initialState)
-  const [loading, setLoading] = useState(false)
+  const [state,       setState]       = useState<GameState>(initialState)
+  const [loading,     setLoading]     = useState(false)
   const [pointsEarned, setPointsEarned] = useState(0)
+  const [bonusEarned, setBonusEarned] = useState(0)
 
   /** Extrai slug e modSlug do backHref para montar URL */
   function nextMissionUrl(nextId: string, nextFila: string[]) {
@@ -86,6 +90,15 @@ export default function MissionPlayer({
     if (correct) setPointsEarned(mission.points_reward)
 
     await completeMission({ missionId: mission.id, score: correct ? score : 0, correct })
+
+    // Desafio do Dia: credita bônus 2× ao acertar
+    if (correct && isDesafio) {
+      const result = await claimDailyBonus(mission.id)
+      if (result.success && result.bonusPoints) {
+        setBonusEarned(result.bonusPoints)
+      }
+    }
+
     setLoading(false)
   }
 
@@ -260,6 +273,11 @@ export default function MissionPlayer({
                     : 'Tente novamente!'
                   : 'Você já completou esta missão.'}
               </p>
+              {state === 'correct' && bonusEarned > 0 && (
+                <p className="text-yellow-600 text-xs font-semibold mt-0.5">
+                  ⚡ +{bonusEarned} bônus Desafio do Dia!
+                </p>
+              )}
               {state === 'wrong' && content.explanation && (
                 <p className="text-red-500 text-xs mt-0.5">
                   {content.explanation as string}

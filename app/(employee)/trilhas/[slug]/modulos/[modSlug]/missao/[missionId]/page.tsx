@@ -8,12 +8,13 @@ import MissionPlayer from './MissionPlayer'
 
 interface Props {
   params:       Promise<{ slug: string; modSlug: string; missionId: string }>
-  searchParams: Promise<{ fila?: string; total?: string }>
+  searchParams: Promise<{ fila?: string; total?: string; desafio?: string }>
 }
 
 export default async function MissaoPage({ params, searchParams }: Props) {
-  const { slug, modSlug, missionId } = await params
-  const { fila = '', total = '0' }   = await searchParams
+  const { slug, modSlug, missionId }      = await params
+  const { fila = '', total = '0', desafio } = await searchParams
+  const isDesafio = desafio === 'true'
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -41,6 +42,7 @@ export default async function MissaoPage({ params, searchParams }: Props) {
       backHref={`/trilhas/${slug}/modulos/${modSlug}`}
       fila={fila}
       total={parseInt(total, 10)}
+      isDesafio={isDesafio}
     />
   )
 }

@@ -9,6 +9,8 @@ import { Flame, Star, BookOpen, Award, User } from 'lucide-react'
 import Link from 'next/link'
 import type { Tables } from '@/types/database'
 import OnboardingFlow from '@/components/onboarding/OnboardingFlow'
+import DailyChallengeCard from '@/components/employee/DailyChallengeCard'
+import { getDailyChallenge } from '@/lib/actions/daily-challenge'
 
 export const metadata = { title: 'Início' }
 
@@ -17,8 +19,8 @@ export default async function InicioPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Carrega dados do perfil + streak + pontos em paralelo
-  const [profileRes, streakRes, trackProgressRes, pointsRes] = await Promise.all([
+  // Carrega dados em paralelo — inclui desafio do dia
+  const [profileRes, streakRes, trackProgressRes, pointsRes, dailyChallenge] = await Promise.all([
     supabase
       .from('profiles')
       .select('name, avatar_url')
@@ -49,6 +51,8 @@ export default async function InicioPage() {
       .select('amount.sum()')
       .eq('profile_id', user.id)
       .single(),
+
+    getDailyChallenge(),
   ])
 
   const totalPoints = (pointsRes.data as { sum: number } | null)?.sum ?? 0
@@ -105,6 +109,13 @@ export default async function InicioPage() {
           </div>
         </div>
       </div>
+
+      {/* Desafio do Dia */}
+      {dailyChallenge && (
+        <section className="mb-6">
+          <DailyChallengeCard challenge={dailyChallenge} />
+        </section>
+      )}
 
       {/* Trilhas em progresso */}
       <section className="mb-6">

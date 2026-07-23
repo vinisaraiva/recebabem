@@ -1,17 +1,25 @@
 /**
  * Ranking do hotel — /ranking
- * Exibe o top 10 de funcionários do mesmo hotel por pontos.
+ * Abas: Geral (all-time) e Semana (pontos da semana corrente).
  */
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { BarChart2, Crown, Flame } from 'lucide-react'
+import { BarChart2, Flame } from 'lucide-react'
+import Link from 'next/link'
 
 export const metadata = { title: 'Ranking' }
 
-export default async function RankingPage() {
+interface Props {
+  searchParams: Promise<{ periodo?: string }>
+}
+
+export default async function RankingPage({ searchParams }: Props) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const { periodo } = await searchParams
+  const isWeekly = periodo === 'semana'
 
   // Verifica se o gerente habilitou o ranking para este hotel
   const { data: hotelId } = await supabase.rpc('get_my_hotel_id')
@@ -23,38 +31,128 @@ export default async function RankingPage() {
         .single()
     : { data: null }
 
-  // hotel_rankings é uma view com RLS — retorna apenas do mesmo hotel
-  const { data: ranking } = await supabase
-    .from('hotel_rankings')
-    .select('*')
-    .order('rank', { ascending: true })
-    .limit(20)
+  // ── Ranking Geral (all-time via view) ─────────────────────────────────────
+  let ranking: Array<{
+    profile_id: string
+    name: string
+    total_points: number
+    current_streak: number
+    rank: number
+  }> = []
+
+  if (!isWeekly) {
+    const { data } = await supabase
+      .from('hotel_rankings')
+      .select('*')
+      .order('rank', { ascending: true })
+      .limit(20)
+    ranking = (data ?? []) as typeof ranking
+  }
+
+  // ── Ranking Semanal ────────────────────────────────────────────────────────
+  let weeklyRanking: Array<{
+    profile_id: string
+    name: string
+    total_points: number
+    rank: number
+  }> = []
+
+  if (isWeekly && hotelId) {
+    // Início da semana = segunda-feira
+    const now = new Date()
+    const dayOfWeek = now.getDay()                          // 0=Dom ... 6=Sáb
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+    const weekStart = new Date(now)
+    weekStart.setDate(now.getDate() - daysToMonday)
+    weekStart.setHours(0, 0, 0, 0)
+
+    const [pointsRes, employeesRes] = await Promise.all([
+      supabase
+        .from('points_ledger')
+        .select('profile_id, amount')
+        .eq('hotel_id', hotelId)
+        .gte('created_at', weekStart.toISOString()),
+
+      supabase
+        .from('profiles')
+        .select('id, name')
+        .eq('hotel_id', hotelId)
+        .eq('role', 'employee')
+        .eq('active', true),
+    ])
+
+    // Agrega pontos por funcionário
+    const pointsByProfile: Record<string, number> = {}
+    for (const row of pointsRes.data ?? []) {
+      pointsByProfile[row.profile_id] = (pointsByProfile[row.profile_id] ?? 0) + row.amount
+    }
+
+    weeklyRanking = (employeesRes.data ?? [])
+      .map((emp) => ({
+        profile_id:   emp.id,
+        name:         emp.name,
+        total_points: pointsByProfile[emp.id] ?? 0,
+        rank:         0,
+      }))
+      .filter((e) => e.total_points > 0)
+      .sort((a, b) => b.total_points - a.total_points)
+      .map((e, idx) => ({ ...e, rank: idx + 1 }))
+  }
+
+  const activeList = isWeekly ? weeklyRanking : ranking
 
   return (
     <div className="px-4 pt-8 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1 flex items-center gap-2">
+      <h1 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
         <BarChart2 size={24} className="text-brand-blue" />
         Ranking
       </h1>
-      <p className="text-gray-500 text-sm mb-6">Top funcionários do mês</p>
+
+      {/* Abas */}
+      <div className="flex gap-2 mb-6 bg-gray-100 p-1 rounded-xl">
+        <Link
+          href="/ranking"
+          className={`flex-1 text-center py-2 rounded-lg text-sm font-medium transition-colors ${
+            !isWeekly
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Geral
+        </Link>
+        <Link
+          href="/ranking?periodo=semana"
+          className={`flex-1 text-center py-2 rounded-lg text-sm font-medium transition-colors ${
+            isWeekly
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Esta semana
+        </Link>
+      </div>
 
       {settings?.ranking_visible === false ? (
         <div className="card text-center py-12">
           <BarChart2 size={32} className="text-gray-300 mx-auto mb-3" />
           <p className="text-gray-500 text-sm">O ranking está desativado para este hotel.</p>
         </div>
-      ) : !ranking || ranking.length === 0 ? (
+      ) : activeList.length === 0 ? (
         <div className="card text-center py-12">
-          <p className="text-gray-400">Nenhuma pontuação ainda. Comece a treinar!</p>
+          <p className="text-gray-400 text-sm">
+            {isWeekly
+              ? 'Nenhuma pontuação ainda esta semana. Comece agora!'
+              : 'Nenhuma pontuação ainda. Comece a treinar!'}
+          </p>
         </div>
       ) : (
         <div className="space-y-2">
-          {ranking.map((entry: Record<string, unknown>, idx: number) => {
-            const rank       = (entry.rank as number) ?? idx + 1
-            const name       = (entry.name as string) ?? 'Funcionário'
-            const points     = (entry.total_points as number) ?? 0
-            const streak     = (entry.current_streak as number) ?? 0
-            const isCurrentUser = entry.profile_id === user.id
+          {activeList.map((entry, idx) => {
+            const rank           = entry.rank ?? idx + 1
+            const name           = entry.name ?? 'Funcionário'
+            const points         = entry.total_points ?? 0
+            const streak         = (entry as Record<string, unknown>).current_streak as number | undefined
+            const isCurrentUser  = entry.profile_id === user.id
 
             const medal =
               rank === 1 ? '🥇' :
@@ -63,7 +161,7 @@ export default async function RankingPage() {
 
             return (
               <div
-                key={entry.profile_id as string}
+                key={entry.profile_id}
                 className={`card flex items-center gap-3 ${
                   isCurrentUser ? 'ring-2 ring-brand-blue' : ''
                 }`}
@@ -88,7 +186,7 @@ export default async function RankingPage() {
                   <p className={`font-medium truncate ${isCurrentUser ? 'text-brand-blue' : 'text-gray-900'}`}>
                     {name} {isCurrentUser && <span className="text-xs">(você)</span>}
                   </p>
-                  {streak > 0 && (
+                  {!isWeekly && streak && streak > 0 && (
                     <p className="text-xs text-orange-500 flex items-center gap-0.5">
                       <Flame size={12} /> {streak}d de sequência
                     </p>
