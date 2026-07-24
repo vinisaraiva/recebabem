@@ -31,7 +31,7 @@ export default async function FinanceiroPage() {
     .order('due_date', { ascending: false })
     .limit(30)
 
-  const m = (metrics ?? {}) as Record<string, unknown>
+  const m = (metrics as unknown ?? {}) as Record<string, unknown>
 
   return (
     <div className="p-6 max-w-4xl">

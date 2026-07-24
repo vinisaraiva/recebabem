@@ -66,8 +66,10 @@ export default async function HotelDetailPage({ params }: Props) {
     .select('completion_pct, profiles!inner(hotel_id)')
     .eq('profiles.hotel_id', id)
 
-  const avgProgress = progressData && progressData.length > 0
-    ? Math.round(progressData.reduce((s, p) => s + p.completion_pct, 0) / progressData.length)
+  type ProgressRow = { completion_pct: number }
+  const progressRows = (progressData ?? []) as unknown as ProgressRow[]
+  const avgProgress = progressRows.length > 0
+    ? Math.round(progressRows.reduce((s, p) => s + p.completion_pct, 0) / progressRows.length)
     : 0
 
   return (

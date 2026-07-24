@@ -25,9 +25,11 @@ export default async function RelatoriosPage() {
     .eq('profiles.role', 'employee')
 
   // Agrupa por trilha
+  type TrackStat = { completion_pct: number; completed_at: string | null; tracks: { name: string; icon: string } | null }
+  const trackRows2 = (trackStats ?? []) as unknown as TrackStat[]
   const byTrack: Record<string, { name: string; icon: string; total: number; count: number; completed: number }> = {}
-  for (const tp of (trackStats ?? [])) {
-    const track = tp.tracks as { name: string; icon: string } | null
+  for (const tp of trackRows2) {
+    const track = tp.tracks
     if (!track) continue
     const key = track.name
     if (!byTrack[key]) byTrack[key] = { name: track.name, icon: track.icon ?? '📚', total: 0, count: 0, completed: 0 }

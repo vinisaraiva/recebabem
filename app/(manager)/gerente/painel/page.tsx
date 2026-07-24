@@ -40,8 +40,10 @@ export default async function PainelPage() {
     .select('completion_pct, profiles!inner(hotel_id, role)')
     .eq('profiles.role', 'employee')
 
-  const avgProgress = progressData && progressData.length > 0
-    ? progressData.reduce((sum, p) => sum + p.completion_pct, 0) / progressData.length
+  type ProgressRow = { completion_pct: number }
+  const progressRows = (progressData ?? []) as unknown as ProgressRow[]
+  const avgProgress = progressRows.length > 0
+    ? progressRows.reduce((sum, p) => sum + p.completion_pct, 0) / progressRows.length
     : 0
 
   // Funcionários sem atividade recente (view inactive_employees)
