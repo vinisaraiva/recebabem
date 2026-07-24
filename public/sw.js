@@ -14,10 +14,8 @@ const CACHE_STATIC    = `recebabem-static-${CACHE_VERSION}`
 const CACHE_DYNAMIC   = `recebabem-dynamic-${CACHE_VERSION}`
 const CACHE_IMAGES    = `recebabem-images-${CACHE_VERSION}`
 
-// Arquivos essenciais para funcionamento offline
+// Arquivos estáticos essenciais (não inclui HTML — navegações são bypass)
 const STATIC_ASSETS = [
-  '/',
-  '/login',
   '/offline',
   '/manifest.json',
   '/icons/icon-192x192.png',
@@ -68,6 +66,9 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return
   if (url.protocol === 'chrome-extension:') return
 
+  // Navegações HTML (Next.js redireciona entre rotas) → browser lida nativamente
+  if (request.mode === 'navigate') return
+
   // Imagens → Stale While Revalidate
   if (isImageRequest(url)) {
     event.respondWith(staleWhileRevalidate(request, CACHE_IMAGES))
@@ -80,7 +81,7 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // App shell → Cache First
+  // Assets estáticos (JS/CSS/fonts) → Cache First
   event.respondWith(cacheFirst(request, CACHE_STATIC))
 })
 
