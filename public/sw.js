@@ -122,7 +122,8 @@ async function staleWhileRevalidate(request, cacheName) {
 
   const networkFetch = fetch(request).then((response) => {
     if (response.ok) {
-      caches.open(cacheName).then((cache) => cache.put(request, response.clone()))
+      const clone = response.clone() // clonar antes do gap async (body seria consumido)
+      caches.open(cacheName).then((cache) => cache.put(request, clone))
     }
     return response
   })
