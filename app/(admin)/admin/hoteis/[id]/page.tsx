@@ -36,13 +36,15 @@ export default async function HotelDetailPage({ params }: Props) {
   const supabase = await createClient()
 
   // Hotel info
-  const { data: hotel } = await supabase
+  type HotelRow = { id: string; name: string; email: string | null; phone: string | null; city: string | null; state: string | null; slug: string; active: boolean; created_at: string }
+  const { data: hotelRaw } = await supabase
     .from('hotels')
     .select('id, name, email, phone, city, state, slug, active, created_at')
     .eq('id', id)
     .single()
 
-  if (!hotel) notFound()
+  if (!hotelRaw) notFound()
+  const hotel = hotelRaw as unknown as HotelRow
 
   // Assinatura
   const { data: subscription } = await supabase
