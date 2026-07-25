@@ -30,6 +30,12 @@ export async function createClient() {
           }
         },
       },
+      // Desabilita cache do Next.js para todas as chamadas Supabase no servidor.
+      // Sem isso, respostas de SELECT ficam cacheadas entre requisições de usuários diferentes.
+      global: {
+        fetch: (url, options = {}) =>
+          fetch(url, { ...options, cache: 'no-store' }),
+      },
     }
   )
 }
